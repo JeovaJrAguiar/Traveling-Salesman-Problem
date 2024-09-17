@@ -70,3 +70,8 @@ void printEdge(Edge* e);
 void printGraph(Graph* graph);
 
 void generateRandomVertices(Graph* graph, int numVertices);
+
+double calculateDistance(Vertex* v1, Vertex* v2);
+
+void findShortestPath(Graph* graph);
+
