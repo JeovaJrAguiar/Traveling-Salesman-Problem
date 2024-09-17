@@ -21,10 +21,12 @@ typedef union {
     Edge aresta;
 } Data;
 
+struct Element;
+
 typedef struct {
     Type type;
     Data data;
-    Element* next; 
+    struct Element* next; 
 } Element;
 
 typedef struct {
@@ -35,17 +37,17 @@ typedef struct {
 } List;
 
 typedef struct {
-    List V; // from Vertexs
-    List E; // from Edges
+    List vertex; // Lista de Vertices
+    List edge; // Lista de arestas
 } Graph;
 
 List* createList(Type type);
 
 Element* createElement(Type type, void* data);
 
-int insert(List* list, Element element);
+int insertElement(List* list, Element* element);
 
-int remove(List* list, Type type, void* data);
+int removeElement(List* list, Type type, void* data);
 
 void printListaEncadeada(List* list);
 
@@ -66,3 +68,5 @@ void printVertex(Vertex* v);
 void printEdge(Edge* e);
 
 void printGraph(Graph* graph);
+
+void generateRandomVertices(Graph* graph, int numVertices);

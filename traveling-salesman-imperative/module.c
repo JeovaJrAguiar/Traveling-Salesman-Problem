@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "./lib.h"
+#include <time.h>
+#include <math.h>
+#include "lib.h"
 
 #define MAX 100
 
 List* createList(Type type) {
     List* list = (List*) malloc(sizeof(List));
 
-    if (list != null) {
+    if (list != NULL) {
         list->init = NULL;
         list->end = NULL;
         list->size = 0;
@@ -33,8 +35,8 @@ Element* createElement(Type type, void* data) {
     return elem;
 }
 
-int insert(List* list, Element element) {
-    if (list == NULL || element == NULL) return -1;
+int insertElement(List* list, Element* element) {
+    if (list == NULL || element == NULL) return -1; 
 
     if (list->init == NULL) {
         list->init = element;
@@ -48,7 +50,8 @@ int insert(List* list, Element element) {
     return 0;
 }
 
-int remove(List* list, Type type, void* data) {
+
+int removeElement(List* list, Type type, void* data) {
     if (list == NULL || list->init == NULL) return 0;
 
     Element* current = list->init;
@@ -57,6 +60,7 @@ int remove(List* list, Type type, void* data) {
     while (current != NULL) {
         int match = 0;
 
+        // Verifica se o tipo corresponde
         if (current->type == type) {
             if (type == VERTEX) {
                 match = memcmp(&current->data.vertice, data, sizeof(Vertex)) == 0;
@@ -66,26 +70,28 @@ int remove(List* list, Type type, void* data) {
         }
 
         if (match) {
-            if (previous == NULL) {
+            // Se for o primeiro elemento
+            if (previous == NULL) {  
                 list->init = current->next;
             } else {
                 previous->next = current->next;
             }
 
-            if (current == list->end) {
+            // Se for o último elemento
+            if (current == list->end) {  
                 list->end = previous;
             }
 
-            list->size--;
-            free(current);
+            list->size--;  // Atualiza o tamanho da lista
+            free(current);  // Libera a memória
             return 1;
         }
 
-        previous = current;
-        current = current->next;
+        previous = current;  // Atualiza o elemento anterior
+        current = current->next;  // Avança para o próximo
     }
 
-    return 0;
+    return 0;  // Elemento não encontrado
 }
 
 int isEmpty(List* list){
@@ -224,8 +230,8 @@ void printVertex(Vertex* v) {
     if (v) {
         printf("Vertex ID: %d\n", v->id);
         printf("Name: %s\n", v->name);
-        printf("X-axis: %d\n", v->x_axis);
-        printf("Y-axis: %d\n", v->y_axis);
+        printf("X-axis: %d\n", v->xAxis);
+        printf("Y-axis: %d\n", v->yAxis);
     }
 }
 
@@ -264,6 +270,92 @@ void printGraph(Graph* graph) {
     }
 }
 
-void main() {
-    prinf("aguiar");
+void generateRandomVertices(Graph* graph, int numVertices) {
+    srand(time(NULL));
+
+    for (int i = 0; i < numVertices; i++) {
+        Vertex* v = (Vertex*) malloc(sizeof(Vertex));
+        v->id = i + 1;
+        sprintf(v->name, "Cidade%d", v->id);
+        v->xAxis = rand() % 101;
+        v->yAxis = rand() % 101;
+        insertVertex(graph, v);
+    }
+}
+
+double calculateDistance(Vertex* v1, Vertex* v2) {
+    int dx = v1->xAxis - v2->xAxis;
+    int dy = v1->yAxis - v2->yAxis;
+    double distance = sqrt(dx * dx + dy * dy); 
+    return distance * 0.1;
+}
+
+int isInPath(List* path, Vertex* v) {
+    Element* elem = path->init;
+    while (elem != NULL) {
+        if (elem->type == VERTEX && memcmp(&elem->data.vertice, v, sizeof(Vertex)) == 0) {
+            return 1; // Vértice já está no caminho
+        }
+        elem = elem->next;
+    }
+    return 0; // Quando o vértice não está no caminho
+}
+
+void findShortestPath(Graph* graph) {
+    if (graph == NULL || graph->vertex.size < 2) return;
+
+    List* path = createList(VERTEX);
+
+    Vertex* start = &graph->vertex.init->data.vertice;
+    insertElement(path, createElement(VERTEX, start));
+
+    while (path->size < graph->vertex.size) {
+        Element* current = path->end; // Último vértice adicionado ao caminho
+        Vertex* lastVertex = &current->data.vertice;
+        double minDistance = INFINITY;
+        Vertex* nextVertex = NULL;
+
+        // Encontra o vértice mais próximo que ainda não está no caminho
+        Element* elem = graph->vertex.init;
+        while (elem != NULL) {
+            Vertex* candidate = &elem->data.vertice;
+
+            // Verifica se o vértice já está no caminho
+            if (!isInPath(path, candidate)) {
+                double distance = calculateDistance(lastVertex, candidate);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nextVertex = candidate;
+                }
+            }
+            elem = elem->next;
+        }
+
+        if (nextVertex != NULL) {
+            insertElement(path, createElement(VERTEX, nextVertex)); // Adiciona o próximo vértice ao ciclo
+        }
+    }
+
+    // Exibe o caminho encontrado
+    printf("Caminho fechado mais curto:\n");
+    printListaEncadeada(path);
+}
+
+
+
+int main() {
+    Graph* graph = createGraph();
+
+    // Gera 5 vértices aleatórios
+    generateRandomVertices(graph, 5);
+
+    // Imprime o grafo com os vértices gerados
+    printGraph(graph);
+
+    // Encontra o caminho fechado mais curto que passa por todos os vértices
+    findShortestPath(graph);
+
+    printf("aguiar");
+
+    return 0;
 }
