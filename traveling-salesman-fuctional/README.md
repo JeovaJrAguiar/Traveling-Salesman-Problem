@@ -1,5 +1,5 @@
 ## To run needs: 
-- To execution: GCC
+- To execution: GHC
 - To exporte imagem of graph: Graphviz 
 
 Commands:
@@ -9,4 +9,3 @@ if linux    $ ./main
 if windows  $ main
 $ dot -Tpng graph.dot -o graph.png
 ```
-

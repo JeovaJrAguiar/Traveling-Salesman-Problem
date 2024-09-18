@@ -9,4 +9,3 @@ se linux    $ ./main
 se windows  $ main
 $ dot -Tpng graph.dot -o graph.png
 ```
-- 
