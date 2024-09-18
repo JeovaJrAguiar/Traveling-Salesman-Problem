@@ -3,10 +3,10 @@
 - To exporte imagem of graph: Graphviz 
 
 Commands:
-'''
-$ gcc -o main main.c
-se linux    $ ./main
-se windows  $ main
+```
+$ ghc -o main main.hs
+if linux    $ ./main
+if windows  $ main
 $ dot -Tpng graph.dot -o graph.png
-'''
+```
 - 
