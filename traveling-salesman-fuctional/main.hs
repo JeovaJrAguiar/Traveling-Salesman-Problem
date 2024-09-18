@@ -2,7 +2,7 @@ import Data.List (permutations, minimumBy)
 import Data.Ord (comparing)
 import Data.Maybe (fromJust)
 
--- Definição dos tipos de dados, no caso, vértice, aresta e grafo
+-- Definição dos tipos de dados, no caso, vértice, aresta e grafom ainda não consegui modelar tudo
 -- Definição do vértice
 data Vertex = Vertex {
     idVertex :: Int,
