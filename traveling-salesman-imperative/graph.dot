@@ -1,0 +1,7 @@
+graph G {
+    1 [label="Cidade1"];
+    2 [label="Cidade2"];
+    3 [label="Cidade3"];
+    4 [label="Cidade4"];
+    5 [label="Cidade5"];
+}
