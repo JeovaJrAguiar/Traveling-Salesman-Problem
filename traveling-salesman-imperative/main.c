@@ -325,12 +325,51 @@ void generateRandomVertices(Graph* graph, int numVertices) {
     }
 }
 
-double calculateDistance(Vertex* v1, Vertex* v2) {
+void generateCompleteGraphEdges(Graph* graph) {
+    if (graph == NULL) return;
+
+    Element* vertexElem1 = graph->vertex.init;
+
+    while (vertexElem1 != NULL) {
+        Vertex* v1 = &vertexElem1->data.vertice;
+        Element* vertexElem2 = vertexElem1->next;
+
+        while (vertexElem2 != NULL) {
+            Vertex* v2 = &vertexElem2->data.vertice;
+
+            // Calcula a distância euclidiana entre os vértices
+            int weight = (int)calculateDistance(v1, v2);
+
+            // Cria uma aresta com peso
+            Edge* e = (Edge*) malloc(sizeof(Edge));
+            e->prev = v1;
+            e->next = v2;
+            e->weight = weight;
+
+            // Insere a aresta na lista de arestas do grafo
+            insertEdge(graph, e);
+
+            vertexElem2 = vertexElem2->next;
+        }
+
+        vertexElem1 = vertexElem1->next;
+    }
+}
+
+
+/*double calculateDistance(Vertex* v1, Vertex* v2) {
     int dx = v1->xAxis - v2->xAxis;
     int dy = v1->yAxis - v2->yAxis;
     double distance = sqrt(dx * dx + dy * dy); 
     return distance * 0.1;
+}*/
+
+double calculateDistance(Vertex* v1, Vertex* v2) {
+    int dx = v1->xAxis - v2->xAxis;
+    int dy = v1->yAxis - v2->yAxis;
+    return sqrt(dx * dx + dy * dy);
 }
+
 
 int isInPath(List* path, Vertex* v) {
     Element* elem = path->init;
@@ -421,45 +460,109 @@ void freeGraph(Graph* graph) {
     free(graph);
 }
 
-void exportGraphToDOT(Graph* graph, const char* filename) {
+void generateDotFile(Graph* graph, const char* filename) {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
-        printf("Erro ao abrir o arquivo para exportação.\n");
+        printf("Erro ao abrir o arquivo %s\n", filename);
         return;
     }
 
-    fprintf(file, "graph G {\n");
+    fprintf(file, "digraph G {\n");
 
-    // Exportar vértices
-    Element* currentVertex = graph->vertex.init;
-    while (currentVertex != NULL) {
-        if (currentVertex->type == VERTEX) {
-            fprintf(file, "    %d [label=\"%s\"];\n", 
-                    currentVertex->data.vertice.id, 
-                    currentVertex->data.vertice.name);
-        }
-        currentVertex = currentVertex->next;
+    // Adiciona os vértices
+    Element* vertexElem = graph->vertex.init;
+    while (vertexElem != NULL) {
+        Vertex* v = &vertexElem->data.vertice;
+        fprintf(file, "    %d [label=\"%s\"];\n", v->id, v->name);
+        vertexElem = vertexElem->next;
     }
 
-    // Exportar arestas
-    Element* currentEdge = graph->edge.init;
-    while (currentEdge != NULL) {
-        if (currentEdge->type == EDGE) {
-            fprintf(file, "    %d -- %d [label=\"%d\"];\n", 
-                    currentEdge->data.aresta.prev->id, 
-                    currentEdge->data.aresta.next->id, 
-                    currentEdge->data.aresta.weight);
+    // Adiciona as arestas com pesos
+    Element* edgeElem = graph->edge.init;
+    while (edgeElem != NULL) {
+        Edge* e = &edgeElem->data.aresta;
+        if (e->prev != NULL && e->next != NULL) {
+            fprintf(file, "    %d -> %d [label=\"%d\"];\n", e->prev->id, e->next->id, e->weight);
         }
-        currentEdge = currentEdge->next;
+        edgeElem = edgeElem->next;
     }
 
     fprintf(file, "}\n");
     fclose(file);
-
-    printf("Grafo exportado com sucesso para %s\n", filename);
 }
 
+void printShortestPath(Graph* graph) {
+    if (graph == NULL || graph->vertex.size < 2) return;
 
+    // Criação do caminho e array de vértices visitados
+    List* path = createList(VERTEX);
+    int* visited = initializeVisitedArray(graph->vertex.size);
+
+    Vertex* start = &graph->vertex.init->data.vertice;
+    insertElement(path, createElement(VERTEX, start));
+    visited[start->id - 1] = 1; // Marca o vértice inicial como visitado
+
+    while (path->size < graph->vertex.size) {
+        Element* current = path->end; // Último vértice adicionado ao caminho
+        Vertex* lastVertex = &current->data.vertice;
+        double minDistance = INFINITY;
+        Vertex* nextVertex = NULL;
+
+        // Encontra o vértice mais próximo que ainda não está no caminho
+        Element* elem = graph->vertex.init;
+        while (elem != NULL) {
+            Vertex* candidate = &elem->data.vertice;
+
+            // Verifica se o vértice já foi visitado
+            if (!visited[candidate->id - 1]) {
+                double distance = calculateDistance(lastVertex, candidate);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nextVertex = candidate;
+                }
+            }
+            elem = elem->next;
+        }
+
+        if (nextVertex != NULL) {
+            insertElement(path, createElement(VERTEX, nextVertex)); // Adiciona o próximo vértice ao caminho
+            visited[nextVertex->id - 1] = 1; // Marca o vértice como visitado
+        }
+    }
+
+    // Voltar ao vértice inicial
+    insertElement(path, createElement(VERTEX, start));
+
+    // Imprime o caminho encontrado
+    printf("Caminho fechado mais curto:\n");
+
+    // Itera sobre o caminho para imprimir as arestas e pesos
+    Element* pathElem = path->init;
+    Vertex* prevVertex = NULL;
+
+    while (pathElem != NULL) {
+        Vertex* currentVertex = &pathElem->data.vertice;
+        if (prevVertex != NULL) {
+            // Encontra a aresta entre o vértice anterior e o atual
+            Element* edgeElem = graph->edge.init;
+            while (edgeElem != NULL) {
+                Edge* edge = &edgeElem->data.aresta;
+                if ((edge->prev == prevVertex && edge->next == currentVertex) ||
+                    (edge->prev == currentVertex && edge->next == prevVertex)) {
+                    printf("Aresta de %d para %d com peso %d\n",
+                           edge->prev->id, edge->next->id, edge->weight);
+                    break;
+                }
+                edgeElem = edgeElem->next;
+            }
+        }
+        prevVertex = currentVertex;
+        pathElem = pathElem->next;
+    }
+
+    // Libera a memória
+    free(visited);
+}
 
 void main() {
     Graph* graph = createGraph();
@@ -470,8 +573,11 @@ void main() {
     // Imprime o grafo com os vértices gerados
     printGraph(graph);
 
+    generateCompleteGraphEdges(graph);
+
     // Encontra o caminho fechado mais curto que passa por todos os vértices
-    findShortestPath(graph);
+    //findShortestPath(graph);
+    printShortestPath(graph);
 
     exportGraphToDOT(graph, "graph.dot");
 
