@@ -9,4 +9,4 @@ if linux    $ ./main
 if windows  $ main
 $ dot -Tpng graph.dot -o graph.png
 ```
-- 
+
